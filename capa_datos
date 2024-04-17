@@ -1,0 +1,57 @@
+#include <string>
+
+struct Cliente
+{
+    std::string tipo;
+    int cantidadPersonas;
+    std::string ruta;
+    double importe;
+};
+
+class DataAccess
+{
+    public:
+    void guardarCliente(const Cliente& cliente);
+    std::vector<Cliente> obtenerClientes();
+};
+
+
+// DataAccess.cpp
+#include "DataAccess.h"
+#include <fstream>
+#include <sstream>
+
+void DataAccess::guardarCliente(const Cliente& cliente) {
+    std::ofstream archivo("clientes.txt", std::ios::app);
+if (archivo.is_open())
+{
+    archivo << cliente.tipo << "," << cliente.cantidadPersonas << "," << cliente.ruta << "," << cliente.importe << "\n";
+    archivo.close();
+}
+}
+
+std::vector<Cliente> DataAccess::obtenerClientes() {
+    std::vector<Cliente> clientes;
+    std::ifstream archivo("clientes.txt");
+    std::string linea;
+
+    while (std::getline(archivo, linea))
+    {
+        std::istringstream iss(linea);
+        std::string tipo, ruta;
+        int cantidadPersonas;
+        double importe;
+
+        if (std::getline(iss, tipo, ',') &&
+            std::getline(iss, ruta, ',') &&
+            (iss >> cantidadPersonas) &&
+            (iss >> importe))
+        {
+
+            clientes.push_back({ tipo, cantidadPersonas, ruta, importe});
+        }
+    }
+
+    archivo.close();
+    return clientes;
+}
