@@ -1,0 +1,51 @@
+// main.cpp
+#include <iostream>
+#include <cpprest/http_listener.h>
+#include <cpprest/json.h>
+#include "DataAccess.h"
+#include "BusinessLogic.h"
+
+using namespace web;
+using namespace web::http;
+using namespace web::http::experimental::listener;
+
+DataAccess dataAccess;
+BusinessLogic businessLogic;
+
+void handle_post(http_request request)
+{
+    json::value jsonBody = request.extract_json().get();
+
+    std::string tipo = jsonBody["tipo"].as_string();
+    int cantidadPersonas = jsonBody["cantidadPersonas"].as_integer();
+    std::string ruta = jsonBody["ruta"].as_string();
+
+    double importe = businessLogic.calcularImporte(ruta, cantidadPersonas, tipo);
+
+    Cliente cliente = { tipo, cantidadPersonas, ruta, importe };
+    dataAccess.guardarCliente(cliente);
+
+    json::value jsonResponse;
+    jsonResponse["importe"] = json::value::number(importe);
+
+    request.reply(status_codes::OK, jsonResponse);
+}
+
+int main()
+{
+    http_listener listener("http://localhost:8080/api/boletos");
+    listener.support(methods::POST, handle_post);
+
+    try
+    {
+        listener.open().wait();
+        std::cout << "API REST iniciada en http://localhost:8080/api/boletos" << std::endl;
+        std::cin.get();
+        listener.close().wait();
+    }
+    catch (const std::exception&e) {
+        std::cerr << e.what() << std::endl;
+    }
+
+    return 0;
+    }
